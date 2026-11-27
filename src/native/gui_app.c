@@ -2435,8 +2435,7 @@ static void update_editor_toolbar_ui(void) {
             SetWindowTextW(g_hwnd_btn_unlock, L"解锁全部编辑");
         }
     }
-    int passed = (g_cur_flat >= 0 && g_cur_flat < g_flat_count) ? is_ex_passed(g_flat[g_cur_flat].id) : 0;
-    EnableWindow(g_hwnd_btn_solution, passed ? TRUE : FALSE);
+    EnableWindow(g_hwnd_btn_solution, (g_cur_flat >= 0 && g_cur_flat < g_flat_count) ? TRUE : FALSE);
     EnableWindow(g_hwnd_btn_prev, g_cur_flat > 0);
     EnableWindow(g_hwnd_btn_next, g_cur_flat < g_flat_count - 1);
 
@@ -2695,10 +2694,6 @@ static LRESULT CALLBACK SolutionWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
 static void show_solution_window(void) {
     if (g_cur_flat < 0 || g_cur_flat >= g_flat_count) return;
-    if (!is_ex_passed(g_flat[g_cur_flat].id)) {
-        MessageBoxW(g_hwnd_main, L"请先通过本题后再查看参考实现。", L"提示", MB_OK | MB_ICONINFORMATION);
-        return;
-    }
 
     static int sol_cls_reg = 0;
     if (!sol_cls_reg) {

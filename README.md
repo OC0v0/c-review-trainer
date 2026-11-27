@@ -26,7 +26,7 @@
 前往本仓库的 **[Releases](https://github.com/OC0v0/c-review-trainer/releases)** 页面下载最新版本的 `c-review-trainer.exe`（约 3 MB），放到任意可读写目录中双击即可运行。
 
 - 进度与草稿自动保存在程序同目录的 `.crev_data/progress.json`（若目录不可写则自动回退到用户目录）。
-- 通过题目后可点击 **「查看参考写法」** 对照参考实现并一键复制。
+- 可随时点击 **「查看参考写法」** 对照参考实现并一键复制。
 
 ## 常用快捷键
 
