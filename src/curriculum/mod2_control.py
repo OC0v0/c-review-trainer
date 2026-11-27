@@ -312,6 +312,156 @@ int main(void) {
             ],
         },
         {
+            "id": "m2_5",
+            "code": "2.5",
+            "title": "while 辗转相除法求最大公约数与最小公倍数",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握 while 条件循环与欧几里得辗转相除法，以及先除后乘避免整数溢出的技巧。",
+            "goal": "读入两个正整数 a 和 b（若任一数 <= 0 则输出 ERROR 并结束）。使用 while 循环通过辗转相除法求出最大公约数 gcd 和最小公倍数 lcm，按 \"gcd=值 lcm=值\" 格式输出。",
+            "param_docs": [
+                {
+                    "name": "while 与 do-while 循环",
+                    "header": "C 语言循环控制语句",
+                    "prototype": "while (条件) { 循环体; }  |  do { 循环体; } while (条件);",
+                    "purpose": "在循环次数预先未知、仅依赖结束条件时重复执行代码块。",
+                    "params": [
+                        {"name": "条件", "type": "整型表达式", "desc": "非 0 为真继续循环，0 为假终止循环。"},
+                        {"name": "do-while 分号", "type": "语法要求", "desc": "do-while 先执行一次循环体再判断条件，末尾的 while(条件); 必须带分号。"},
+                    ],
+                    "returns": "无返回值。",
+                    "notes": [
+                        "辗转相除法步骤：当 y != 0 时反复执行 t = x % y; x = y; y = t;，循环结束时 x 即为最大公约数。",
+                        "计算最小公倍数时应写作 (long long)(a / gcd) * b，先除后乘可防止 a * b 发生 int 溢出。",
+                    ],
+                }
+            ],
+            "template": """#include <stdio.h>
+
+int main(void) {
+    int a, b;
+    scanf("%d %d", &a, &b);
+
+    // <<<EDIT_START>>>
+    // 1. 若 a <= 0 或 b <= 0，输出 ERROR 并换行后 return 0
+    // 2. 用 while 辗转相除法求 gcd，再计算 lcm（注意防溢出）
+    // 3. 输出: gcd=%d lcm=%lld\\n
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int main(void) {
+    int a, b;
+    scanf("%d %d", &a, &b);
+
+    if (a <= 0 || b <= 0) {
+        printf("ERROR\\n");
+        return 0;
+    }
+
+    int x = a, y = b;
+    while (y != 0) {
+        int t = x % y;
+        x = y;
+        y = t;
+    }
+    int gcd = x;
+    long long lcm = (long long)(a / gcd) * b;
+    printf("gcd=%d lcm=%lld\\n", gcd, lcm);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bwhile\s*\(", "message": "请使用 while 循环实现辗转相除法。"},
+            ],
+            "tests": [
+                {"name": "常规正整数", "stdin": "24 36\n", "expected_stdout": "gcd=12 lcm=72\n"},
+                {"name": "互质数", "stdin": "17 13\n", "expected_stdout": "gcd=1 lcm=221\n"},
+                {"name": "非法输入", "stdin": "0 12\n", "expected_stdout": "ERROR\n"},
+                {"name": "较大数防溢出", "stdin": "100000 150000\n", "expected_stdout": "gcd=50000 lcm=300000\n"},
+            ],
+        },
+        {
+            "id": "m2_6",
+            "code": "2.6",
+            "title": "<math.h> 数学函数与一元二次方程求根",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握 math.h 中 sqrt 与 fabs 的用法，并用浮点容差 fabs(disc) <= 1e-6 处理实根与共轭复根。",
+            "goal": "输入一元二次方程 ax^2 + bx + c = 0 的三个系数 a, b, c（double，保证 a > 0）。计算判别式 disc = b*b - 4*a*c：\n- 若 fabs(disc) <= 1e-6，输出 \"x1=x2=%.2f\\n\"（注意当结果绝对值小于 1e-7 时按 0.00 输出避免 -0.00）；\n- 若 disc > 1e-6，输出两不等实根 \"x1=%.2f x2=%.2f\\n\"（其中 x1 = (-b + sqrt(disc))/(2*a)，x2 = (-b - sqrt(disc))/(2*a)）；\n- 若 disc < -1e-6，输出共轭复根 \"x1=%.2f+%.2fi x2=%.2f-%.2fi\\n\"（实部 p = -b/(2*a)，虚部 q = sqrt(fabs(disc))/(2*a)）。",
+            "param_docs": [
+                {
+                    "name": "sqrt / fabs / pow",
+                    "header": "#include <math.h>",
+                    "prototype": "double sqrt(double x);\ndouble fabs(double x);\ndouble pow(double base, double exp);",
+                    "purpose": "执行实数的平方根、浮点数绝对值与幂次运算。",
+                    "params": [
+                        {"name": "x", "type": "double", "desc": "sqrt 要求 x >= 0，传入负数会产生 NaN；fabs 返回 double 的非负绝对值（不要对浮点数使用整型 abs）。"},
+                        {"name": "base, exp", "type": "double", "desc": "pow 计算 base 的 exp 次方；平方等简单整数次幂直接写 b * b 更高效且精确。"},
+                    ],
+                    "returns": "返回 double 类型的计算结果。",
+                    "notes": [
+                        "浮点数存在二进制表示误差，判断浮点数是否等于 0 应使用 fabs(x) <= 1e-6，而非 x == 0。",
+                        "若计算出的 -0.0 在 %.2f 下可能显示为 -0.00，可在输出前判断 if (fabs(v) < 1e-7) v = 0.0;。",
+                    ],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <math.h>
+
+int main(void) {
+    double a, b, c;
+    scanf("%lf %lf %lf", &a, &b, &c);
+
+    // <<<EDIT_START>>>
+    // 计算 disc = b * b - 4 * a * c，使用 fabs 与 sqrt 分三种情况求解并按要求格式输出
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <math.h>
+
+int main(void) {
+    double a, b, c;
+    scanf("%lf %lf %lf", &a, &b, &c);
+
+    double disc = b * b - 4.0 * a * c;
+    if (fabs(disc) <= 1e-6) {
+        double x = -b / (2.0 * a);
+        if (fabs(x) < 1e-7) x = 0.0;
+        printf("x1=x2=%.2f\\n", x);
+    } else if (disc > 1e-6) {
+        double x1 = (-b + sqrt(disc)) / (2.0 * a);
+        double x2 = (-b - sqrt(disc)) / (2.0 * a);
+        if (fabs(x1) < 1e-7) x1 = 0.0;
+        if (fabs(x2) < 1e-7) x2 = 0.0;
+        printf("x1=%.2f x2=%.2f\\n", x1, x2);
+    } else {
+        double p = -b / (2.0 * a);
+        double q = sqrt(fabs(disc)) / (2.0 * a);
+        if (fabs(p) < 1e-7) p = 0.0;
+        printf("x1=%.2f+%.2fi x2=%.2f-%.2fi\\n", p, q, p, q);
+    }
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bsqrt\s*\(", "message": "请使用 math.h 中的 sqrt 函数求平方根。"},
+                {"pattern": r"\bfabs\s*\(", "message": "请使用 math.h 中的 fabs 函数进行浮点绝对值与判零处理。"},
+            ],
+            "tests": [
+                {"name": "两不等实根", "stdin": "1 -5 6\n", "expected_stdout": "x1=3.00 x2=2.00\n"},
+                {"name": "两相等实根", "stdin": "1 -4 4\n", "expected_stdout": "x1=x2=2.00\n"},
+                {"name": "共轭复根", "stdin": "1 2 5\n", "expected_stdout": "x1=-1.00+2.00i x2=-1.00-2.00i\n"},
+                {"name": "纯虚根(防-0.00)", "stdin": "1 0 4\n", "expected_stdout": "x1=0.00+2.00i x2=0.00-2.00i\n"},
+            ],
+        },
+        {
             "id": "m2_stage_a",
             "code": "★ 阶段 2A",
             "title": "阶段综合：递推法求数列与交错级数",

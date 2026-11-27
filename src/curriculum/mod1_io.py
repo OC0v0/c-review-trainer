@@ -34,7 +34,8 @@ MODULE = {
                     ],
                     "returns": "成功时返回实际输出的字符数；出错时返回负值。",
                     "notes": [
-                        "%d 输出 int，%f 输出 float/double，%.2f 表示保留 2 位小数，%c 输出 char。",
+                        "%d 输出 int，%f 输出 float/double，%.2f 表示保留 2 位小数，%c 输出 char，%o/%x 分别输出八进制/十六进制。",
+                        "附加标志：- 左对齐，+ 强制输出正负号，0 不足最小宽度时前导补零（如 %+7d、%+06d、%-7d）。",
                         "\\n 表示换行符；若需输出字符 % 本身，需写作 %%。",
                     ],
                 }
@@ -303,6 +304,82 @@ int main(void) {
                 {"name": "常规整除与余数", "stdin": "7 2\n", "expected_stdout": "3 1 3.50 7\n"},
                 {"name": "被除数小于除数", "stdin": "3 4\n", "expected_stdout": "0 3 0.75 4\n"},
                 {"name": "刚好整除", "stdin": "15 5\n", "expected_stdout": "3 0 3.00 15\n"},
+            ],
+        },
+        {
+            "id": "m1_5",
+            "code": "1.5",
+            "title": "printf 进阶格式控制与 sizeof 运算符",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握 printf 的宽度、正负号、补零、对齐及进制格式符，以及 sizeof 运算符的求值规则。",
+            "goal": "输入两个整数 a 和 b。第一行用 printf 按指定格式输出：[宽度为 6 且强制带正负号的 a] 空格 [宽度为 6、强制带正负号且前导补零的 b] 空格 [带 0x 前缀的小写十六进制 (unsigned)a]；第二行用 sizeof 输出数组 arr 的总字节数、字符串常量 \"C99\" 的字节数，以及执行 sizeof(x = 99) 后的字节数与变量 x 的值。",
+            "param_docs": [
+                {
+                    "name": "printf 宽度与标志修饰符",
+                    "header": "#include <stdio.h>",
+                    "prototype": "%[标志][最小宽度][.精度]转换字符",
+                    "purpose": "精确控制数值输出时的占位宽度、对齐方向、符号显示、前导零与进制前缀。",
+                    "params": [
+                        {"name": "+ / - / 0 / #", "type": "标志字符", "desc": "+ 使正数也输出正号；- 使输出左对齐（默认右对齐）；0 在宽度不足时用前导 0 填充；# 为 %x/%o 输出 0x/0 前缀。"},
+                        {"name": "最小宽度 m", "type": "正整数", "desc": "指定最少占用的字符列数，例如 %+6d 对 12 输出 '   +12'，%+06d 对 -12 输出 '-00012'。"},
+                    ],
+                    "returns": "返回实际输出的字符数。",
+                    "notes": ["输出无符号十六进制时，建议将整数转为 unsigned int 后配合 %#x（或 %x）输出。"],
+                },
+                {
+                    "name": "sizeof 运算符",
+                    "header": "C 语言单目运算符",
+                    "prototype": "sizeof(类型名)  |  sizeof 表达式",
+                    "purpose": "在编译期计算数据类型或表达式结果所占用的内存字节数，返回 size_t 类型。",
+                    "params": [
+                        {"name": "类型名 / 表达式", "type": "操作数", "desc": "对类型名必须加括号如 sizeof(double)；对数组名返回整个数组字节数；对字符串常量包含末尾 '\\0'。"},
+                    ],
+                    "returns": "无符号整数（size_t，输出时可用 %zu 或强制转为 (int) 后用 %d）。",
+                    "notes": [
+                        "sizeof 的操作数表达式在运行期不会被求值，因此 sizeof(x = 99) 不会改变变量 x 的值。",
+                        "在标准 C 中，字符常量（如 'A'）的类型为 int，其 sizeof 结果与 sizeof(int) 相同。",
+                    ],
+                },
+            ],
+            "template": """#include <stdio.h>
+
+int main(void) {
+    int a, b;
+    scanf("%d %d", &a, &b);
+
+    float arr[7];
+    short x = 1;
+
+    // <<<EDIT_START>>>
+    // 第一行：用 printf 按 "[%+6d] [%+06d] [%#x]\\n" 格式输出 a, b, (unsigned int)a
+    // 第二行：用 printf 输出 sizeof(arr)、sizeof("C99")、sizeof(x = 99) 以及 x（均转 int 用 %d，空格分隔）
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int main(void) {
+    int a, b;
+    scanf("%d %d", &a, &b);
+
+    float arr[7];
+    short x = 1;
+
+    printf("[%+6d] [%+06d] [%#x]\\n", a, b, (unsigned int)a);
+    printf("%d %d %d %d\\n", (int)sizeof(arr), (int)sizeof("C99"), (int)sizeof(x = 99), (int)x);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bprintf\s*\(", "message": "请使用 printf 输出格式化结果。"},
+                {"pattern": r"\bsizeof\b", "message": "请使用 sizeof 运算符计算字节数，不要写死数字。"},
+            ],
+            "tests": [
+                {"name": "正数与负数", "stdin": "26 -13\n", "expected_stdout": "[   +26] [-00013] [0x1a]\n28 4 2 1\n"},
+                {"name": "较大正数", "stdin": "255 7\n", "expected_stdout": "[  +255] [+00007] [0xff]\n28 4 2 1\n"},
             ],
         },
         {

@@ -75,6 +75,16 @@ def _code_check_to_tokens(req: dict[str, str]) -> dict[str, Any]:
         r"\bfwrite\s*\(": ["fwrite("],
         r"\bfseek\s*\(": ["fseek("],
         r"\bftell\s*\(": ["ftell("],
+        r"\bsizeof\b": ["sizeof"],
+        r"\bwhile\s*\(": ["while"],
+        r"\bsqrt\s*\(": ["sqrt("],
+        r"\bfabs\s*\(": ["fabs("],
+        r"\bstrstr\s*\(": ["strstr("],
+        r"\bstrncpy\s*\(": ["strncpy("],
+        r"\bsrand\s*\(": ["srand("],
+        r"\brand\s*\(": ["rand("],
+        r"\bhanoi\s*\(": ["hanoi("],
+        r"\bfputs\s*\(": ["fputs("],
     }
     tokens = mapping.get(pat)
     if tokens is None:

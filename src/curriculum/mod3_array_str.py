@@ -325,6 +325,177 @@ int main(void) {
             ],
         },
         {
+            "id": "m3_5",
+            "code": "3.5",
+            "title": "strncpy、strstr 子串计数与 sizeof / strlen 辨析",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握有长度上限的字符串复制 strncpy、子串查找 strstr 及 sizeof 与 strlen 的区别。",
+            "goal": "读入主串 text、子串 pat 和截取长度 k（均不含空格，1 <= k <= 15）。\n第一行：使用 strstr 统计 pat 在 text 中不重叠出现的次数，并输出该次数；\n第二行：使用 strncpy 将 text 的前 k 个字符复制到定长数组 prefix[16]（必须确保末尾有 '\\0'），输出 \"prefix sizeof(prefix) strlen(prefix)\"。",
+            "param_docs": [
+                {
+                    "name": "strstr",
+                    "header": "#include <string.h>",
+                    "prototype": "char *strstr(const char *haystack, const char *needle);",
+                    "purpose": "在字符串 haystack 中查找子串 needle 首次出现的位置。",
+                    "params": [
+                        {"name": "haystack", "type": "const char *", "desc": "被查找的主字符串。"},
+                        {"name": "needle", "type": "const char *", "desc": "要查找的目标子串。"},
+                    ],
+                    "returns": "找到时返回子串首次出现的起始地址指针；未找到时返回 NULL。",
+                    "notes": ["统计不重叠出现次数时，每次找到 p = strstr(p, pat) 后，将扫描起点推进 p += strlen(pat)。"],
+                },
+                {
+                    "name": "strncpy",
+                    "header": "#include <string.h>",
+                    "prototype": "char *strncpy(char *dest, const char *src, size_t n);",
+                    "purpose": "从 src 最多复制 n 个字符到 dest。",
+                    "params": [
+                        {"name": "dest", "type": "char *", "desc": "目标字符数组。"},
+                        {"name": "src", "type": "const char *", "desc": "源字符串。"},
+                        {"name": "n", "type": "size_t", "desc": "最多复制的字符数。"},
+                    ],
+                    "returns": "返回 dest。",
+                    "notes": [
+                        "当 src 的长度 >= n 时，strncpy 不会自动在 dest 末尾写入 '\\0'，必须手动添加 dest[n] = '\\0'。",
+                        "sizeof(prefix) 是数组分配的总字节数（编译期常量 16）；strlen(prefix) 是 '\\0' 之前的实际字符数。",
+                    ],
+                },
+            ],
+            "template": """#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    char text[256], pat[64], prefix[16];
+    int k;
+    scanf("%255s %63s %d", text, pat, &k);
+
+    // <<<EDIT_START>>>
+    // 1. 使用 strstr 循环统计 pat 在 text 中的不重叠出现次数 cnt 并输出
+    // 2. 使用 strncpy 复制前 k 个字符到 prefix，手动补 '\\0'，输出 prefix、sizeof(prefix) 和 strlen(prefix)
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    char text[256], pat[64], prefix[16];
+    int k;
+    scanf("%255s %63s %d", text, pat, &k);
+
+    int cnt = 0;
+    size_t plen = strlen(pat);
+    const char *p = text;
+    if (plen > 0) {
+        while ((p = strstr(p, pat)) != NULL) {
+            cnt++;
+            p += plen;
+        }
+    }
+    printf("%d\\n", cnt);
+
+    strncpy(prefix, text, (size_t)k);
+    prefix[k] = '\\0';
+    printf("%s %d %d\\n", prefix, (int)sizeof(prefix), (int)strlen(prefix));
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bstrstr\s*\(", "message": "请使用 strstr 查找子串位置。"},
+                {"pattern": r"\bstrncpy\s*\(", "message": "请使用 strncpy 按长度 k 复制前缀。"},
+            ],
+            "tests": [
+                {"name": "多次不重叠匹配", "stdin": "abababa aba 4\n", "expected_stdout": "2\nabab 16 4\n"},
+                {"name": "连续相同子串", "stdin": "aaaaa aa 3\n", "expected_stdout": "2\naaa 16 3\n"},
+                {"name": "未匹配且k大于长度", "stdin": "hello xyz 5\n", "expected_stdout": "0\nhello 16 5\n"},
+            ],
+        },
+        {
+            "id": "m3_6",
+            "code": "3.6",
+            "title": "直接插入排序（Insertion Sort）",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握直接插入排序将当前元素插入前方有序区间的核心步骤与边界条件。",
+            "goal": "补全 insertion_sort(int a[], int n)：使用直接插入排序将数组 a[0..n-1] 排为升序，并返回元素向后移动（或相邻交换）的总次数（本题按标准后移赋值 a[j+1] = a[j] 的次数统计）。",
+            "param_docs": [
+                {
+                    "name": "直接插入排序",
+                    "header": "基本数组排序算法（第 10 讲）",
+                    "prototype": "for (i = 1; i < n; i++) { key = a[i]; j = i - 1; while (j >= 0 && a[j] > key) { ... } a[j+1] = key; }",
+                    "purpose": "将数组前 i 个元素维护为有序区间，逐个取出 a[i] 插入到合适位置。",
+                    "params": [
+                        {"name": "key = a[i]", "type": "int", "desc": "暂存当前待插入元素，防止后续元素右移时被覆盖。"},
+                        {"name": "j >= 0 && a[j] > key", "type": "循环条件", "desc": "必须把 j >= 0 写在 && 左侧，利用逻辑短路防止 j == -1 时越界访问 a[-1]。"},
+                    ],
+                    "returns": "返回内层循环中元素右移（a[j + 1] = a[j]）的总次数。",
+                    "notes": ["对于已经有序的数组，直接插入排序的移动次数为 0，时间复杂度为 O(n)。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+
+int insertion_sort(int a[], int n) {
+    // 补全直接插入排序，将 a[0..n-1] 升序排列，并返回元素右移的总次数
+// <<<EDIT_START>>>
+    return 0;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    int n, a[100];
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+
+    int shifts = insertion_sort(a, n);
+    for (int i = 0; i < n; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", a[i]);
+    }
+    printf("\\n%d\\n", shifts);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int insertion_sort(int a[], int n) {
+    int shifts = 0;
+    for (int i = 1; i < n; i++) {
+        int key = a[i];
+        int j = i - 1;
+        while (j >= 0 && a[j] > key) {
+            a[j + 1] = a[j];
+            j--;
+            shifts++;
+        }
+        a[j + 1] = key;
+    }
+    return shifts;
+}
+
+int main(void) {
+    int n, a[100];
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+
+    int shifts = insertion_sort(a, n);
+    for (int i = 0; i < n; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", a[i]);
+    }
+    printf("\\n%d\\n", shifts);
+    return 0;
+}
+""",
+            "tests": [
+                {"name": "常规乱序", "stdin": "5\n6 3 5 2 4\n", "expected_stdout": "2 3 4 5 6\n7\n"},
+                {"name": "已有序(0次移动)", "stdin": "4\n1 2 3 4\n", "expected_stdout": "1 2 3 4\n0\n"},
+                {"name": "完全逆序", "stdin": "4\n9 7 5 1\n", "expected_stdout": "1 5 7 9\n6\n"},
+            ],
+        },
+        {
             "id": "m3_stage_a",
             "code": "★ 阶段 3A",
             "title": "阶段综合：选择/冒泡排序与二分查找",

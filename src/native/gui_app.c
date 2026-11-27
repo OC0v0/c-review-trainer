@@ -416,10 +416,10 @@ typedef struct {
     int height;
 } TreeRow;
 
-static FlatEx g_flat[128];
+static FlatEx g_flat[256];
 static int g_flat_count = 0;
 static int g_mod_collapsed[32] = {0};
-static TreeRow g_tree_rows[160];
+static TreeRow g_tree_rows[300];
 static int g_tree_row_count = 0;
 static int g_tree_total_h = 0;
 static int g_tree_scroll_y = 0;
@@ -1860,7 +1860,7 @@ static void rebuild_tree_rows(int preserve_scroll) {
         g_tree_rows[r].y_top = 0; g_tree_rows[r].height = 0;
         if (!g_mod_collapsed[m]) {
             for (int fi = 0; fi < g_flat_count; fi++) {
-                if (g_flat[fi].mod_idx == (int)m && ex_matches_tree_filter(fi) && g_tree_row_count < 160) {
+                if (g_flat[fi].mod_idx == (int)m && ex_matches_tree_filter(fi) && g_tree_row_count < 300) {
                     int er = g_tree_row_count++;
                     g_tree_rows[er].is_mod = 0; g_tree_rows[er].mod_idx = (int)m; g_tree_rows[er].flat_idx = fi;
                     g_tree_rows[er].y_top = 0; g_tree_rows[er].height = 0;
@@ -2136,7 +2136,7 @@ static void init_flat_exercises(void) {
         JVal *mod = g_core.modules->items[m];
         JVal *exs = j_obj_get(mod, "exercises");
         if (exs && exs->type == J_ARR) {
-            for (size_t j = 0; j < exs->arr_len && g_flat_count < 128; j++) {
+            for (size_t j = 0; j < exs->arr_len && g_flat_count < 256; j++) {
                 int fi = g_flat_count++;
                 g_flat[fi].mod_idx = (int)m; g_flat[fi].ex_idx = (int)j;
                 g_flat[fi].mod = mod; g_flat[fi].ex = exs->items[j];
@@ -3075,7 +3075,11 @@ static void trigger_cheat_all_pass(void) {
     refresh_progress_and_tree();
     update_editor_toolbar_ui();
 
-    const char *msg = "[全部通过] 兄 这事什么啊\n  [通过] 已完成全部 50 / 50 题进度！（可点击右上角「重置进度」随时恢复）\n";
+    char msg[256];
+    _snprintf(msg, sizeof(msg),
+              "[全部通过] 兄 这事什么啊\n  [通过] 已完成全部 %d / %d 题进度！（可点击右上角「重置进度」随时恢复）\n",
+              g_flat_count, g_flat_count);
+    msg[sizeof(msg) - 1] = '\0';
     render_console_report(msg, 1, 1);
     SetWindowTextW(g_hwnd_status, L"兄 这事什么啊");
     MessageBoxW(g_hwnd_main, L"兄 这事什么啊", L"C 语言程序设计复习助手", MB_OK | MB_ICONINFORMATION);

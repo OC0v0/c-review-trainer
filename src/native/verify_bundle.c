@@ -1,6 +1,6 @@
 /*
  * Headless console verifier that loads the EXACT bundled payload inside c-review-trainer.exe
- * via core_init(exe_path) and verifies all 50 exercises, File I/O, compile errors, timeouts,
+ * via core_init(exe_path) and verifies all bundled exercises, File I/O, compile errors, timeouts,
  * and progress persistence.
  */
 #define _CRT_SECURE_NO_WARNINGS
@@ -59,5 +59,5 @@ int main(int argc, char **argv) {
            passed, total, err_ok, to_ok, prog_ok);
 
     core_shutdown();
-    return (total == 50 && passed == 50 && err_ok && to_ok && prog_ok) ? 0 : 1;
+    return (total >= 66 && passed == total && err_ok && to_ok && prog_ok) ? 0 : 1;
 }

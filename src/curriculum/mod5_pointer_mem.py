@@ -353,6 +353,256 @@ int main(void) {
             ],
         },
         {
+            "id": "m5_6",
+            "code": "5.6",
+            "title": "行指针 (*p)[N] 与二维数组指针传参",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "区分数组指针（行指针）int (*p)[4] 与指针数组 int *p[4]，掌握用行指针遍历二维数组。",
+            "goal": "补全函数 sum_rows(int (*p)[4], int rows, int row_sums[])：使用行指针 p 遍历 rows 行 4 列的二维整型数组，将第 i 行的元素之和存入 row_sums[i]，并返回全部元素的总和。",
+            "param_docs": [
+                {
+                    "name": "行指针（数组指针）",
+                    "header": "C 语言二维数组指针（第 20～21 讲）",
+                    "prototype": "int (*p)[4];  // 指向含 4 个 int 元素的一维数组",
+                    "purpose": "以整行为步长指向二维数组中的某一行；p + 1 跳过整行 4 * sizeof(int) 字节。",
+                    "params": [
+                        {"name": "(*p)[4] 与 *p[4] 的区别", "type": "优先级辨析", "desc": "[] 优先级高于 *。int (*p)[4] 是指针（指向长度为 4 的 int 数组）；int *p[4] 是数组（存放 4 个 int * 指针）。"},
+                        {"name": "访问元素", "type": "等价写法", "desc": "访问第 i 行第 j 列可写作 p[i][j] 或 *(*(p + i) + j)。"},
+                    ],
+                    "returns": "返回整个二维数组全部元素的总和。",
+                    "notes": ["二维数组名 mat[rows][4] 在传参时会退化为指向首行的行指针 int (*)[4]，可直接作为实参传入。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+
+int sum_rows(int (*p)[4], int rows, int row_sums[]) {
+    // 计算每行元素和写入 row_sums[i]，并返回矩阵全部元素之和
+// <<<EDIT_START>>>
+    return 0;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    int rows, mat[10][4], rsum[10];
+    scanf("%d", &rows);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < 4; j++) {
+            scanf("%d", &mat[i][j]);
+        }
+    }
+    int total = sum_rows(mat, rows, rsum);
+    for (int i = 0; i < rows; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", rsum[i]);
+    }
+    printf("\\n%d\\n", total);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int sum_rows(int (*p)[4], int rows, int row_sums[]) {
+    int total = 0;
+    for (int i = 0; i < rows; i++) {
+        int s = 0;
+        for (int j = 0; j < 4; j++) {
+            s += *(*(p + i) + j);
+        }
+        row_sums[i] = s;
+        total += s;
+    }
+    return total;
+}
+
+int main(void) {
+    int rows, mat[10][4], rsum[10];
+    scanf("%d", &rows);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < 4; j++) {
+            scanf("%d", &mat[i][j]);
+        }
+    }
+    int total = sum_rows(mat, rows, rsum);
+    for (int i = 0; i < rows; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", rsum[i]);
+    }
+    printf("\\n%d\\n", total);
+    return 0;
+}
+""",
+            "tests": [
+                {"name": "2x4矩阵", "stdin": "2\n1 2 3 4\n10 20 30 40\n", "expected_stdout": "10 100\n110\n"},
+                {"name": "3x4含负数", "stdin": "3\n-1 2 -3 4\n5 5 5 5\n0 0 0 -2\n", "expected_stdout": "2 20 -2\n20\n"},
+            ],
+        },
+        {
+            "id": "m5_7",
+            "code": "5.7",
+            "title": "二级指针 int ** 与二维动态数组",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握使用二级指针动态分配任意行列的二维数组，以及按分配逆序逐行释放内存的方法。",
+            "goal": "输入行数 r 和列数 c（1 <= r, c <= 50），随后输入 r x c 个整数。请用二级指针 int **mat 动态创建二维数组读入数据，计算每一列的元素和并输出（空格分隔），最后先逐行 free(mat[i]) 再 free(mat)。",
+            "param_docs": [
+                {
+                    "name": "二维动态数组（二级指针）",
+                    "header": "#include <stdlib.h>",
+                    "prototype": "int **mat = (int **)malloc(r * sizeof(int *));\nfor (i = 0; i < r; i++) mat[i] = (int *)malloc(c * sizeof(int));",
+                    "purpose": "在运行期按未知的行数 r 和列数 c 申请二维存储空间，并支持 mat[i][j] 双下标访问。",
+                    "params": [
+                        {"name": "外层分配", "type": "r * sizeof(int *)", "desc": "分配存放 r 个行指针的指针数组，注意元素大小是 sizeof(int *) 而非 sizeof(int)。"},
+                        {"name": "内层分配", "type": "c * sizeof(int)", "desc": "为每一行 mat[i] 分配存放 c 个 int 的一维动态数组。"},
+                    ],
+                    "returns": "无返回值。",
+                    "notes": [
+                        "释放顺序必须与分配顺序相反：先循环调用 free(mat[i]) 释放每一行，最后再调用 free(mat) 释放行指针数组。",
+                        "若先 free(mat)，将导致无法访问 mat[i] 而引发内存泄漏。",
+                    ],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    int r, c;
+    scanf("%d %d", &r, &c);
+
+    // <<<EDIT_START>>>
+    // 1. 使用 int **mat 动态分配 r 行 c 列的二维数组并读入数据
+    // 2. 按列求和并输出（空格分隔，末尾换行）
+    // 3. 先逐行 free(mat[i])，再 free(mat)
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    int r, c;
+    scanf("%d %d", &r, &c);
+
+    int **mat = (int **)malloc((size_t)r * sizeof(int *));
+    if (mat == NULL) return 1;
+    for (int i = 0; i < r; i++) {
+        mat[i] = (int *)malloc((size_t)c * sizeof(int));
+        if (mat[i] == NULL) return 1;
+        for (int j = 0; j < c; j++) {
+            scanf("%d", &mat[i][j]);
+        }
+    }
+
+    for (int j = 0; j < c; j++) {
+        int col_sum = 0;
+        for (int i = 0; i < r; i++) {
+            col_sum += mat[i][j];
+        }
+        if (j > 0) putchar(' ');
+        printf("%d", col_sum);
+    }
+    putchar('\\n');
+
+    for (int i = 0; i < r; i++) {
+        free(mat[i]);
+    }
+    free(mat);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bmalloc\s*\(", "message": "请使用 malloc 动态分配二维数组。"},
+                {"pattern": r"\bfree\s*\(", "message": "请使用 free 释放二维动态数组内存。"},
+            ],
+            "tests": [
+                {"name": "2x3矩阵列和", "stdin": "2 3\n1 2 3\n4 5 6\n", "expected_stdout": "5 7 9\n"},
+                {"name": "3x2含负数", "stdin": "3 2\n10 -3\n-4 8\n2 -5\n", "expected_stdout": "8 0\n"},
+            ],
+        },
+        {
+            "id": "m5_8",
+            "code": "5.8",
+            "title": "指针作函数返回值与字符过滤（trim_copy）",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握返回堆内存指针的函数写法，避开返回局部变量地址的悬空指针错误，并用指针过滤字符串指定字符。",
+            "goal": "补全函数 char *trim_copy(const char *s, char target)：在堆上用 malloc 分配新字符串空间，将 s 中所有不等于 target 的字符按顺序复制到新串末尾补 '\\0' 后返回该指针；主函数输出新串并负责 free。",
+            "param_docs": [
+                {
+                    "name": "返回指针的函数",
+                    "header": "C 语言指针返回值规则（第 22 讲）",
+                    "prototype": "char *func(const char *s, char target);",
+                    "purpose": "函数计算并生成位于堆区（或静态区）的数据后，将其起始地址返回给主调函数。",
+                    "params": [
+                        {"name": "允许返回的指针", "type": "有效生存期", "desc": "malloc/calloc 分配的堆地址（需主调函数 free）、实参传入的指针、static 局部数组地址或字符串常量地址。"},
+                        {"name": "禁止返回的指针", "type": "未定义行为", "desc": "绝不能返回函数内普通局部变量或局部数组的地址，函数返回后其栈空间即失效。"},
+                    ],
+                    "returns": "返回新分配字符串的起始地址（char *）；分配失败时返回 NULL。",
+                    "notes": ["计算所需堆空间字节数时必须为末尾 '\\0' 预留 1 字节，即 strlen(s) + 1。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char *trim_copy(const char *s, char target) {
+    // 1. 使用 malloc(strlen(s) + 1) 分配新串空间
+    // 2. 使用指针遍历 s，跳过等于 target 的字符，复制其余字符并补 '\\0'
+    // 3. 返回新串指针
+// <<<EDIT_START>>>
+    return NULL;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    char s[256], ch;
+    scanf("%255s %c", s, &ch);
+    char *res = trim_copy(s, ch);
+    if (res == NULL) return 1;
+    printf("%s\\n", res[0] ? res : "EMPTY");
+    free(res);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char *trim_copy(const char *s, char target) {
+    char *out = (char *)malloc(strlen(s) + 1);
+    if (out == NULL) return NULL;
+    char *q = out;
+    for (const char *p = s; *p != '\\0'; p++) {
+        if (*p != target) {
+            *q++ = *p;
+        }
+    }
+    *q = '\\0';
+    return out;
+}
+
+int main(void) {
+    char s[256], ch;
+    scanf("%255s %c", s, &ch);
+    char *res = trim_copy(s, ch);
+    if (res == NULL) return 1;
+    printf("%s\\n", res[0] ? res : "EMPTY");
+    free(res);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bmalloc\s*\(", "message": "请使用 malloc 在堆上分配返回字符串空间，不要返回局部数组地址。"},
+            ],
+            "tests": [
+                {"name": "删除指定字符", "stdin": "banana a\n", "expected_stdout": "bnn\n"},
+                {"name": "字符不存在", "stdin": "ustc z\n", "expected_stdout": "ustc\n"},
+                {"name": "全部被删除", "stdin": "xxxx x\n", "expected_stdout": "EMPTY\n"},
+            ],
+        },
+        {
             "id": "m5_stage_a",
             "code": "★ 阶段 5A",
             "title": "阶段综合：指针数组实现多字符串排序",

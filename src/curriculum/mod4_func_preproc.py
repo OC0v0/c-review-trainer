@@ -345,8 +345,158 @@ int main(void) {
             ],
         },
         {
+            "id": "m4_6",
+            "code": "4.6",
+            "title": "二维数组作为函数参数",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握二维数组作形参时必须指定列数的语法规则，完成矩阵最大值及位置查找。",
+            "goal": "补全函数 find_matrix_max(int mat[][4], int rows, int *max_r, int *max_c)，在 rows 行 4 列的整型矩阵中找出最大元素（若有多个相同最大值，取最先出现的行优先位置），将其行列下标分别写入 *max_r、*max_c，并返回该最大值。",
+            "param_docs": [
+                {
+                    "name": "二维数组形参",
+                    "header": "C 语言函数参数（第 14 讲）",
+                    "prototype": "int func(int mat[][4], int rows);",
+                    "purpose": "将固定列数的二维数组按地址传入函数，函数内可直接用 mat[i][j] 访问或修改元素。",
+                    "params": [
+                        {"name": "mat[][4]", "type": "int (*)[4]", "desc": "第一维（行数）可以省略，但第二维（列数 4）必须为编译期常量，以便编译器按行跨度计算地址偏移。"},
+                        {"name": "rows", "type": "int", "desc": "二维数组的实际有效行数。"},
+                    ],
+                    "returns": "返回矩阵中的最大元素值。",
+                    "notes": ["实参传入时直接写数组名 mat，且实参的第二维列数必须与形参声明的列数（4）一致。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+
+int find_matrix_max(int mat[][4], int rows, int *max_r, int *max_c) {
+    // 遍历 rows x 4 矩阵，找出最大值并记录其首次出现的行下标 *max_r 和列下标 *max_c
+// <<<EDIT_START>>>
+    return 0;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    int rows, mat[10][4];
+    scanf("%d", &rows);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < 4; j++) {
+            scanf("%d", &mat[i][j]);
+        }
+    }
+    int r = 0, c = 0;
+    int mx = find_matrix_max(mat, rows, &r, &c);
+    printf("%d %d %d\\n", mx, r, c);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int find_matrix_max(int mat[][4], int rows, int *max_r, int *max_c) {
+    int best = mat[0][0];
+    *max_r = 0;
+    *max_c = 0;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (mat[i][j] > best) {
+                best = mat[i][j];
+                *max_r = i;
+                *max_c = j;
+            }
+        }
+    }
+    return best;
+}
+
+int main(void) {
+    int rows, mat[10][4];
+    scanf("%d", &rows);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < 4; j++) {
+            scanf("%d", &mat[i][j]);
+        }
+    }
+    int r = 0, c = 0;
+    int mx = find_matrix_max(mat, rows, &r, &c);
+    printf("%d %d %d\\n", mx, r, c);
+    return 0;
+}
+""",
+            "tests": [
+                {"name": "3x4矩阵", "stdin": "3\n1 5 2 4\n9 3 8 9\n0 -2 7 6\n", "expected_stdout": "9 1 0\n"},
+                {"name": "全负数矩阵", "stdin": "2\n-9 -5 -3 -8\n-4 -1 -7 -2\n", "expected_stdout": "-1 1 1\n"},
+            ],
+        },
+        {
+            "id": "m4_7",
+            "code": "4.7",
+            "title": "srand 与 rand 区间伪随机数生成",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握 stdlib.h 中 srand 设置随机种子、rand 生成伪随机数以及取模映射到闭区间 [L, R] 的写法。",
+            "goal": "读入无符号整数种子 seed、个数 n 和闭区间端点 L、R（L <= R）。使用 srand(seed) 初始化随机序列后，循环 n 次生成 [L, R] 内的整数 L + rand() % (R - L + 1)，用单个空格分隔输出并在末尾换行。",
+            "param_docs": [
+                {
+                    "name": "srand / rand",
+                    "header": "#include <stdlib.h>",
+                    "prototype": "void srand(unsigned int seed);\nint rand(void);",
+                    "purpose": "srand 设置伪随机数生成器的初始种子；rand 返回 [0, RAND_MAX] 范围内的伪随机整数。",
+                    "params": [
+                        {"name": "seed", "type": "unsigned int", "desc": "随机种子。相同种子会产生完全相同的随机序列；实际应用中常配合 #include <time.h> 传入 (unsigned int)time(NULL)。"},
+                    ],
+                    "returns": "rand 返回 0 到 RAND_MAX 之间的整数；srand 无返回值。",
+                    "notes": [
+                        "将 rand() 映射到闭区间 [L, R] 的标准表达式为：L + rand() % (R - L + 1)。",
+                        "srand 应在程序开始（循环外）仅调用一次，切勿放进循环内反复重置种子。",
+                    ],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    unsigned int seed;
+    int n, L, R;
+    scanf("%u %d %d %d", &seed, &n, &L, &R);
+
+    // <<<EDIT_START>>>
+    // 1. 调用 srand(seed) 设置种子
+    // 2. 循环 n 次生成 [L, R] 区间内的随机整数并空格分隔输出，末尾换行
+
+    // <<<EDIT_END>>>
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    unsigned int seed;
+    int n, L, R;
+    scanf("%u %d %d %d", &seed, &n, &L, &R);
+
+    srand(seed);
+    for (int i = 0; i < n; i++) {
+        int val = L + rand() % (R - L + 1);
+        if (i > 0) putchar(' ');
+        printf("%d", val);
+    }
+    putchar('\\n');
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bsrand\s*\(", "message": "请使用 srand(seed) 初始化随机种子。"},
+                {"pattern": r"\brand\s*\(", "message": "请调用 rand() 生成伪随机数。"},
+            ],
+            "tests": [
+                {"name": "骰子区间[1,6]", "stdin": "42 5 1 6\n", "expected_stdout": "2 5 2 3 4\n"},
+                {"name": "两位数区间[10,99]", "stdin": "7 6 10 99\n", "expected_stdout": "71 62 15 30 51 46\n"},
+                {"name": "含负区间[-5,5]", "stdin": "2026 4 -5 5\n", "expected_stdout": "5 -4 3 1\n"},
+            ],
+        },
+        {
             "id": "m4_stage",
-            "code": "★ 阶段 4",
+            "code": "★ 阶段 4A",
             "title": "阶段综合：递归进制转换与组合数计算",
             "kind": "stage",
             "editable_default": "full",
@@ -408,6 +558,77 @@ int main(void) {
                 {"name": "十六进制与 C(5,2)", "stdin": "255 16 5 2\n", "expected_stdout": "FF\n10\n"},
                 {"name": "二进制与 C(6,3)", "stdin": "13 2 6 3\n", "expected_stdout": "1101\n20\n"},
                 {"name": "num=0 与 k=0", "stdin": "0 8 7 0\n", "expected_stdout": "0\n1\n"},
+            ],
+        },
+        {
+            "id": "m4_stage_b",
+            "code": "★ 阶段 4B",
+            "title": "阶段综合：汉诺塔递归移动与步骤统计（Hanoi）",
+            "kind": "stage",
+            "editable_default": "partial",
+            "summary": "掌握第 17 讲经典递归问题——汉诺塔（梵塔）的三步分解结构与步骤返回累计。",
+            "goal": "输入圆盘数量 n（1 <= n <= 5）。编写递归函数 int hanoi(int n, char src, char dst, char tmp)，将 n 个圆盘从 src 柱借助 tmp 柱移动到 dst 柱：每移动一个圆盘输出一行 `src->dst`（如 `A->C`），并返回总移动步数；主函数最后输出一行 `STEPS=总步数`。",
+            "guidance": [
+                "1. 基例：当 n == 1 时，直接输出 \"%c->%c\\n\"（src 到 dst），并返回 1。",
+                "2. 递归分解（n > 1）：第一步调用 hanoi(n - 1, src, tmp, dst) 将上方 n - 1 个圆盘移到辅助柱 tmp；第二步将最底层圆盘从 src 直接移到 dst 并输出一行；第三步调用 hanoi(n - 1, tmp, dst, src) 将 tmp 上的 n - 1 个圆盘移到 dst。",
+                "3. 返回三部分步数之和 s1 + 1 + s2（总步数应等于 2^n - 1）。",
+            ],
+            "sidebar_refs": {
+                "functions": [
+                    {"name": "printf", "sig": "printf(\"%c->%c\\n\", src, dst);", "desc": "按格式输出单步圆盘移动。"},
+                ],
+                "structures": [
+                    {
+                        "name": "汉诺塔三步递归框架",
+                        "code": "int hanoi(int n, char src, char dst, char tmp) {\n    if (n == 1) {\n        printf(\"%c->%c\\n\", src, dst);\n        return 1;\n    }\n    int c1 = hanoi(n - 1, src, tmp, dst);\n    printf(\"%c->%c\\n\", src, dst);\n    int c2 = hanoi(n - 1, tmp, dst, src);\n    return c1 + 1 + c2;\n}",
+                    },
+                ],
+            },
+            "template": """#include <stdio.h>
+
+int hanoi(int n, char src, char dst, char tmp) {
+    // 补全递归函数：输出每一步移动并返回总步数
+// <<<EDIT_START>>>
+    return 0;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    int n;
+    scanf("%d", &n);
+    int steps = hanoi(n, 'A', 'C', 'B');
+    printf("STEPS=%d\\n", steps);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+int hanoi(int n, char src, char dst, char tmp) {
+    if (n == 1) {
+        printf("%c->%c\\n", src, dst);
+        return 1;
+    }
+    int c1 = hanoi(n - 1, src, tmp, dst);
+    printf("%c->%c\\n", src, dst);
+    int c2 = hanoi(n - 1, tmp, dst, src);
+    return c1 + 1 + c2;
+}
+
+int main(void) {
+    int n;
+    scanf("%d", &n);
+    int steps = hanoi(n, 'A', 'C', 'B');
+    printf("STEPS=%d\\n", steps);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bhanoi\s*\(", "message": "请在 hanoi 函数内递归调用 hanoi。"},
+            ],
+            "tests": [
+                {"name": "n=1 基例", "stdin": "1\n", "expected_stdout": "A->C\nSTEPS=1\n"},
+                {"name": "n=2", "stdin": "2\n", "expected_stdout": "A->B\nA->C\nB->C\nSTEPS=3\n"},
+                {"name": "n=3 经典3盘", "stdin": "3\n", "expected_stdout": "A->C\nA->B\nC->B\nA->C\nB->A\nB->C\nA->C\nSTEPS=7\n"},
             ],
         },
     ],

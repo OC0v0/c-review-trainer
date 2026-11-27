@@ -552,5 +552,234 @@ int main(void) {
                 }
             ],
         },
+        {
+            "id": "m9_s6",
+            "code": "专项 6",
+            "title": "自顶向下模块化综合：排序、中位数与二分定位",
+            "kind": "special",
+            "editable_default": "partial",
+            "summary": "呼应第 15 讲与第 18 讲模块化设计：将排序、奇偶中位数计算与有序二分查找拆分为独立子函数协同完成。",
+            "goal": "输入正整数 n（1 <= n <= 200）、n 个整数以及待查目标值 target。\n请分别补全三个职责清晰的子函数：\n1. void sort_asc(int a[], int n)：将数组原地升序排列；\n2. double calc_median(const int a[], int n)：在已升序数组中求中位数（n 为奇数取 a[n/2]；n 为偶数取 (a[n/2 - 1] + a[n/2]) / 2.0）；\n3. int bin_search(const int a[], int n, int target)：在已升序数组中二分查找 target，找到返回任意匹配下标（本题保证无重复元素），找不到返回 -1。\n主函数将输出：排序后的数组、中位数（保留 1 位小数）与查找结果下标。",
+            "guidance": [
+                "1. sort_asc：使用插入排序、选择排序或冒泡排序均可，确保升序。",
+                "2. calc_median：注意当 n 为偶数时必须用 / 2.0 进行浮点除法，避免整数除法截断 0.5。",
+                "3. bin_search：维护闭区间 [l, r]，循环条件 l <= r，mid = l + (r - l) / 2，避免越界或死循环。",
+            ],
+            "sidebar_refs": {
+                "functions": [
+                    {"name": "sort_asc / calc_median / bin_search", "sig": "模块化子函数划分", "desc": "每个函数仅负责单一子任务，通过参数与返回值传递数据，避免依赖全局变量。"},
+                ],
+                "structures": [
+                    {
+                        "name": "奇偶中位数计算模板",
+                        "code": "if (n % 2 == 1) return (double)a[n / 2];\nreturn (a[n / 2 - 1] + a[n / 2]) / 2.0;",
+                    },
+                    {
+                        "name": "闭区间二分查找模板",
+                        "code": "int l = 0, r = n - 1;\nwhile (l <= r) {\n    int mid = l + (r - l) / 2;\n    if (a[mid] == target) return mid;\n    else if (a[mid] < target) l = mid + 1;\n    else r = mid - 1;\n}\nreturn -1;",
+                    },
+                ],
+            },
+            "template": """#include <stdio.h>
+
+void sort_asc(int a[], int n);
+double calc_median(const int a[], int n);
+int bin_search(const int a[], int n, int target);
+
+// <<<EDIT_START>>>
+// 请在此实现 sort_asc、calc_median 与 bin_search 三个函数
+
+// <<<EDIT_END>>>
+
+int main(void) {
+    int n, a[200], target;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    scanf("%d", &target);
+
+    sort_asc(a, n);
+    for (int i = 0; i < n; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", a[i]);
+    }
+    printf("\\n%.1f\\n%d\\n", calc_median(a, n), bin_search(a, n, target));
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+void sort_asc(int a[], int n);
+double calc_median(const int a[], int n);
+int bin_search(const int a[], int n, int target);
+
+void sort_asc(int a[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = a[i];
+        int j = i - 1;
+        while (j >= 0 && a[j] > key) {
+            a[j + 1] = a[j];
+            j--;
+        }
+        a[j + 1] = key;
+    }
+}
+
+double calc_median(const int a[], int n) {
+    if (n % 2 == 1) {
+        return (double)a[n / 2];
+    }
+    return (a[n / 2 - 1] + a[n / 2]) / 2.0;
+}
+
+int bin_search(const int a[], int n, int target) {
+    int l = 0, r = n - 1;
+    while (l <= r) {
+        int mid = l + (r - l) / 2;
+        if (a[mid] == target) return mid;
+        else if (a[mid] < target) l = mid + 1;
+        else r = mid - 1;
+    }
+    return -1;
+}
+
+int main(void) {
+    int n, a[200], target;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) scanf("%d", &a[i]);
+    scanf("%d", &target);
+
+    sort_asc(a, n);
+    for (int i = 0; i < n; i++) {
+        if (i > 0) putchar(' ');
+        printf("%d", a[i]);
+    }
+    printf("\\n%.1f\\n%d\\n", calc_median(a, n), bin_search(a, n, target));
+    return 0;
+}
+""",
+            "tests": [
+                {"name": "偶数长度含小数中位数", "stdin": "6\n9 2 7 4 1 6\n7\n", "expected_stdout": "1 2 4 6 7 9\n5.0\n4\n"},
+                {"name": "偶数长度.5中位数且未命中", "stdin": "4\n10 3 6 1\n5\n", "expected_stdout": "1 3 6 10\n4.5\n-1\n"},
+                {"name": "奇数长度", "stdin": "5\n8 -2 5 0 3\n-2\n", "expected_stdout": "-2 0 3 5 8\n3.0\n0\n"},
+            ],
+        },
+        {
+            "id": "m9_s7",
+            "code": "专项 7",
+            "title": "指针与内存综合：二维动态矩阵转置与行极值统计",
+            "kind": "special",
+            "editable_default": "full",
+            "summary": "打通二级指针动态内存分配、函数封装（alloc/transpose/free）与矩阵统计输出。",
+            "goal": "输入正整数 r、c（1 <= r, c <= 50）以及 r 行 c 列的整数矩阵。\n请编写模块化函数完成：\n1. alloc_matrix(int r, int c)：用二级指针 int ** 动态分配 r 行 c 列矩阵；\n2. transpose_matrix(int **mat, int r, int c)：动态分配并返回 c 行 r 列的转置矩阵；\n3. free_matrix(int **mat, int r)：按正确顺序释放 r 行二维动态数组；\n第一行输出原矩阵每一行的最大值（空格分隔）；随后 c 行输出转置矩阵（每行元素空格分隔），最后释放两块二维动态内存。",
+            "guidance": [
+                "1. alloc_matrix 返回 int **：先 malloc(r * sizeof(int *))，再循环对每行 malloc(c * sizeof(int))。",
+                "2. transpose_matrix 调用 alloc_matrix(c, r) 得到 res，填入 res[j][i] = mat[i][j] 并返回 res。",
+                "3. free_matrix 先循环 free(mat[i])，再 free(mat)。",
+                "4. 原矩阵和转置矩阵行数分别为 r 和 c，释放时分别传入对应行数。",
+            ],
+            "sidebar_refs": {
+                "functions": [
+                    {"name": "malloc / free", "sig": "#include <stdlib.h>", "desc": "成对分配与释放二维动态数组。"},
+                ],
+                "structures": [
+                    {
+                        "name": "二维动态矩阵分配与释放函数",
+                        "code": "int **alloc_matrix(int r, int c) {\n    int **m = (int **)malloc((size_t)r * sizeof(int *));\n    for (int i = 0; i < r; i++)\n        m[i] = (int *)malloc((size_t)c * sizeof(int));\n    return m;\n}\nvoid free_matrix(int **m, int r) {\n    for (int i = 0; i < r; i++) free(m[i]);\n    free(m);\n}",
+                    },
+                ],
+            },
+            "template": """#include <stdio.h>
+#include <stdlib.h>
+
+// 请完整编写 alloc_matrix、transpose_matrix、free_matrix 与 main
+
+int main(void) {
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <stdlib.h>
+
+int **alloc_matrix(int r, int c) {
+    int **m = (int **)malloc((size_t)r * sizeof(int *));
+    if (m == NULL) return NULL;
+    for (int i = 0; i < r; i++) {
+        m[i] = (int *)malloc((size_t)c * sizeof(int));
+        if (m[i] == NULL) return NULL;
+    }
+    return m;
+}
+
+int **transpose_matrix(int **mat, int r, int c) {
+    int **t = alloc_matrix(c, r);
+    if (t == NULL) return NULL;
+    for (int i = 0; i < r; i++) {
+        for (int j = 0; j < c; j++) {
+            t[j][i] = mat[i][j];
+        }
+    }
+    return t;
+}
+
+void free_matrix(int **m, int r) {
+    if (m == NULL) return;
+    for (int i = 0; i < r; i++) {
+        free(m[i]);
+    }
+    free(m);
+}
+
+int main(void) {
+    int r, c;
+    scanf("%d %d", &r, &c);
+    int **mat = alloc_matrix(r, c);
+    if (mat == NULL) return 1;
+
+    for (int i = 0; i < r; i++) {
+        int rmax = 0;
+        for (int j = 0; j < c; j++) {
+            scanf("%d", &mat[i][j]);
+            if (j == 0 || mat[i][j] > rmax) rmax = mat[i][j];
+        }
+        if (i > 0) putchar(' ');
+        printf("%d", rmax);
+    }
+    putchar('\\n');
+
+    int **tr = transpose_matrix(mat, r, c);
+    if (tr == NULL) {
+        free_matrix(mat, r);
+        return 1;
+    }
+    for (int i = 0; i < c; i++) {
+        for (int j = 0; j < r; j++) {
+            if (j > 0) putchar(' ');
+            printf("%d", tr[i][j]);
+        }
+        putchar('\\n');
+    }
+
+    free_matrix(tr, c);
+    free_matrix(mat, r);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bmalloc\s*\(", "message": "请使用 malloc 动态分配二维矩阵。"},
+                {"pattern": r"\bfree\s*\(", "message": "请使用 free 释放动态分配的二维矩阵。"},
+            ],
+            "tests": [
+                {
+                    "name": "2x3矩阵行极值与转置",
+                    "stdin": "2 3\n3 -1 5\n2 9 4\n",
+                    "expected_stdout": "5 9\n3 2\n-1 9\n5 4\n",
+                },
+                {
+                    "name": "3x2全负数矩阵",
+                    "stdin": "3 2\n-5 -2\n-9 -4\n-1 -8\n",
+                    "expected_stdout": "-2 -4 -1\n-5 -9 -1\n-2 -4 -8\n",
+                },
+            ],
+        },
     ],
 }

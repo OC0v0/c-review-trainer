@@ -171,7 +171,7 @@ int main(void) {
         {
             "id": "m8_3",
             "code": "8.3",
-            "title": "fgetc / fputc 与 fgets / fputs 文本读写",
+            "title": "fgetc 与 fputc 逐字符文件读写",
             "kind": "single",
             "editable_default": "partial",
             "summary": "掌握逐字符文件复制转换及用 int 接收 fgetc 返回值判断 EOF。",
@@ -402,6 +402,121 @@ int main(void) {
                     "stdin": "5\n",
                     "input_files": {"arr.bin": {"type": "binary_ints", "values": [11, 22, 33, 44, 55, 66]}},
                     "expected_stdout": "6 66\n",
+                },
+            ],
+        },
+        {
+            "id": "m8_6",
+            "code": "8.6",
+            "title": "fgets / fputs 按行读写文件与 feof 注意事项",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握文本文件按行读取 fgets、字符串写入 fputs、兼容 Windows 换行符及正确判断文件结束。",
+            "goal": "当前目录存在文本文件 \"lines.txt\"。请用 fgets 逐行读取该文件，去除每行末尾可能存在的 '\\n' 与 '\\r'；跳过空行（去除换行后长度为 0 的行），对每个非空行按 \"行号: 内容\\n\"（行号从 1 开始递增）使用 fputs/fprintf 写入 \"numbered.txt\"。",
+            "param_docs": [
+                {
+                    "name": "fgets / fputs / feof",
+                    "header": "#include <stdio.h>",
+                    "prototype": "char *fgets(char *buf, int n, FILE *fp);\nint fputs(const char *s, FILE *fp);\nint feof(FILE *fp);",
+                    "purpose": "fgets 从文件流最多读取 n - 1 个字符（遇 '\\n' 或文件尾停止并补 '\\0'）；fputs 将字符串写入文件流（不自动追加换行符）。",
+                    "params": [
+                        {"name": "buf, n", "type": "char *, int", "desc": "接收缓冲区及缓冲区字节容量（通常传 sizeof(buf)）。"},
+                        {"name": "fp", "type": "FILE *", "desc": "已打开的文本文件指针。"},
+                    ],
+                    "returns": "fgets 读到文件尾或出错时返回 NULL；fputs 成功返回非负值，出错返回 EOF；feof 在上一次读操作越过文件尾失败后才返回非 0。",
+                    "notes": [
+                        "判断文件是否读完应直接写 while (fgets(buf, sizeof(buf), in) != NULL)，切勿写成 while (!feof(in)) { fgets(...); ... }，否则文件末尾会多处理一次残留内容。",
+                        "Windows 文本文件可能含 \\r\\n 换行，逐行处理前同时剥离末尾 '\\n' 和 '\\r' 可确保跨平台兼容。",
+                    ],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    FILE *in = fopen("lines.txt", "r");
+    FILE *out = fopen("numbered.txt", "w");
+    if (in == NULL || out == NULL) {
+        if (in) fclose(in);
+        if (out) fclose(out);
+        return 1;
+    }
+
+    char buf[256];
+    int line_no = 0;
+
+    // <<<EDIT_START>>>
+    // 1. 使用 while (fgets(buf, sizeof(buf), in) != NULL) 逐行读取
+    // 2. 去掉行尾的 '\\n' 和 '\\r'；若为空行则跳过
+    // 3. 行号递增，将 "行号: " 与 buf 及 "\\n" 写入 out（使用 fputs 输出正文）
+
+    // <<<EDIT_END>>>
+
+    fclose(in);
+    fclose(out);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    FILE *in = fopen("lines.txt", "r");
+    FILE *out = fopen("numbered.txt", "w");
+    if (in == NULL || out == NULL) {
+        if (in) fclose(in);
+        if (out) fclose(out);
+        return 1;
+    }
+
+    char buf[256];
+    int line_no = 0;
+
+    while (fgets(buf, sizeof(buf), in) != NULL) {
+        size_t len = strlen(buf);
+        while (len > 0 && (buf[len - 1] == '\\n' || buf[len - 1] == '\\r')) {
+            buf[--len] = '\\0';
+        }
+        if (len == 0) continue;
+        line_no++;
+        fprintf(out, "%d: ", line_no);
+        fputs(buf, out);
+        fputc('\\n', out);
+    }
+
+    fclose(in);
+    fclose(out);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bfgets\s*\(", "message": "请使用 fgets 逐行读取文本文件。"},
+                {"pattern": r"\bfputs\s*\(", "message": "请使用 fputs 写入行文本内容。"},
+            ],
+            "tests": [
+                {
+                    "name": "含空行与空格的文本文件",
+                    "input_files": {
+                        "lines.txt": {
+                            "type": "text",
+                            "content": "Hello C\n\nSecond Line\n   \nEnd\n",
+                        }
+                    },
+                    "expected_files": {
+                        "numbered.txt": {
+                            "type": "text",
+                            "content": "1: Hello C\n2: Second Line\n3:    \n4: End\n",
+                        }
+                    },
+                },
+                {
+                    "name": "末尾无换行符文件",
+                    "input_files": {
+                        "lines.txt": {"type": "text", "content": "Alpha\nBeta"}
+                    },
+                    "expected_files": {
+                        "numbered.txt": {"type": "text", "content": "1: Alpha\n2: Beta\n"}
+                    },
                 },
             ],
         },

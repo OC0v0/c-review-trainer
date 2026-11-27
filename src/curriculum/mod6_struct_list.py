@@ -499,6 +499,240 @@ int main(void) {
             ],
         },
         {
+            "id": "m6_6",
+            "code": "6.6",
+            "title": "嵌套结构体与返回结构体指针的函数",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握结构体嵌套成员的逐级访问（s->birth.year），以及函数接收结构体数组指针并返回目标元素指针的写法。",
+            "goal": "Student 结构体嵌套了 Date 类型的出生日期成员 birth 和三门课程成绩数组 score[3]。补全函数 const Student *find_best(const Student *arr, int n)，返回三科总分最高的学生指针（总分相同时返回出生日期更早、即年龄更大者）。",
+            "param_docs": [
+                {
+                    "name": "嵌套结构体与结构体指针传参",
+                    "header": "C 语言结构体进阶（第 11、23 讲）",
+                    "prototype": "const Student *find_best(const Student *arr, int n);",
+                    "purpose": "通过结构体指针传递结构体数组，避免整块数据值拷贝；直接返回指向数组内最优元素的指针。",
+                    "params": [
+                        {"name": "arr[i].birth.year / p->birth.year", "type": "嵌套成员访问", "desc": "当外层是结构体指针 p、内层 birth 是普通结构体变量时，外层用 ->、内层用 .，写作 p->birth.year。"},
+                        {"name": "返回值 const Student *", "type": "结构体指针", "desc": "返回 &arr[best] 或指向对应元素的指针，主调函数用 -> 读取成员。"},
+                    ],
+                    "returns": "指向最优学生元素的只读结构体指针。",
+                    "notes": ["比较两个日期 (y1, m1, d1) 与 (y2, m2, d2) 谁更早时，依次比较 year、month、day 即可。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+
+typedef struct {
+    int year;
+    int month;
+    int day;
+} Date;
+
+typedef struct {
+    char name[24];
+    Date birth;
+    int score[3];
+} Student;
+
+const Student *find_best(const Student *arr, int n) {
+    // 找出三科总分最高的学生并返回其指针；总分相同则出生日期更早者优先
+// <<<EDIT_START>>>
+    return &arr[0];
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    int n;
+    Student stus[50];
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        scanf("%23s %d %d %d %d %d %d",
+              stus[i].name,
+              &stus[i].birth.year, &stus[i].birth.month, &stus[i].birth.day,
+              &stus[i].score[0], &stus[i].score[1], &stus[i].score[2]);
+    }
+    const Student *best = find_best(stus, n);
+    int total = best->score[0] + best->score[1] + best->score[2];
+    printf("%s %04d-%02d-%02d %d %.2f\\n",
+           best->name, best->birth.year, best->birth.month, best->birth.day,
+           total, total / 3.0);
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+
+typedef struct {
+    int year;
+    int month;
+    int day;
+} Date;
+
+typedef struct {
+    char name[24];
+    Date birth;
+    int score[3];
+} Student;
+
+const Student *find_best(const Student *arr, int n) {
+    const Student *best = &arr[0];
+    int best_sum = best->score[0] + best->score[1] + best->score[2];
+    for (int i = 1; i < n; i++) {
+        const Student *cur = &arr[i];
+        int cur_sum = cur->score[0] + cur->score[1] + cur->score[2];
+        int earlier = 0;
+        if (cur->birth.year != best->birth.year) earlier = cur->birth.year < best->birth.year;
+        else if (cur->birth.month != best->birth.month) earlier = cur->birth.month < best->birth.month;
+        else earlier = cur->birth.day < best->birth.day;
+
+        if (cur_sum > best_sum || (cur_sum == best_sum && earlier)) {
+            best = cur;
+            best_sum = cur_sum;
+        }
+    }
+    return best;
+}
+
+int main(void) {
+    int n;
+    Student stus[50];
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        scanf("%23s %d %d %d %d %d %d",
+              stus[i].name,
+              &stus[i].birth.year, &stus[i].birth.month, &stus[i].birth.day,
+              &stus[i].score[0], &stus[i].score[1], &stus[i].score[2]);
+    }
+    const Student *best = find_best(stus, n);
+    int total = best->score[0] + best->score[1] + best->score[2];
+    printf("%s %04d-%02d-%02d %d %.2f\\n",
+           best->name, best->birth.year, best->birth.month, best->birth.day,
+           total, total / 3.0);
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"->", "message": "请使用结构体指针运算符 -> 访问结构体成员。"},
+            ],
+            "tests": [
+                {
+                    "name": "常规最高分",
+                    "stdin": "3\nAlice 2006 5 12 85 90 92\nBob 2005 11 3 95 92 93\nCindy 2006 1 20 80 88 84\n",
+                    "expected_stdout": "Bob 2005-11-03 280 93.33\n",
+                },
+                {
+                    "name": "同分比出生日期",
+                    "stdin": "3\nLi 2006 8 15 90 90 90\nWang 2006 3 9 95 85 90\nZhang 2006 3 25 88 92 90\n",
+                    "expected_stdout": "Wang 2006-03-09 270 90.00\n",
+                },
+            ],
+        },
+        {
+            "id": "m6_7",
+            "code": "6.7",
+            "title": "单链表头插法建表（与尾插法对照）",
+            "kind": "single",
+            "editable_default": "partial",
+            "summary": "掌握单链表头插法建表的指针连接顺序，理解头插法产生与输入顺序相反链表的特性。",
+            "goal": "补全函数 Node *create_list_head(void)：循环读入整数直到遇到 0 停止（0 不存入链表），每次用 malloc 创建新结点并采用头插法插入链表头部，返回最终链表头指针（若第一个数就是 0 则返回 NULL）。",
+            "param_docs": [
+                {
+                    "name": "单链表头插法",
+                    "header": "C 语言单链表建表（第 26 讲）",
+                    "prototype": "node->next = head;\nhead = node;",
+                    "purpose": "将每个新结点直接插入到当前头指针 head 之前，使新结点成为新的表头。",
+                    "params": [
+                        {"name": "连接顺序", "type": "关键两步", "desc": "必须先执行 node->next = head 保存原表头，再执行 head = node 更新头指针；顺序颠倒会导致原链表丢失。"},
+                        {"name": "与尾插法的区别", "type": "顺序特性", "desc": "头插法无需维护 tail 指针，代码更简洁，但遍历结果与输入顺序相反；尾插法遍历结果与输入顺序一致。"},
+                    ],
+                    "returns": "返回新建单链表的头指针 head（空表返回 NULL）。",
+                    "notes": ["头指针 head 在函数内会被修改，因此必须通过函数返回值（或二级指针参数）传回主调函数。"],
+                }
+            ],
+            "template": """#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node {
+    int val;
+    struct Node *next;
+} Node;
+
+Node *create_list_head(void) {
+    // 循环读入整数直到遇到 0，用头插法建立单链表并返回 head
+// <<<EDIT_START>>>
+    return NULL;
+// <<<EDIT_END>>>
+}
+
+int main(void) {
+    Node *head = create_list_head();
+    if (head == NULL) {
+        printf("EMPTY\\n");
+    } else {
+        for (Node *p = head; p != NULL; p = p->next) {
+            if (p != head) putchar(' ');
+            printf("%d", p->val);
+        }
+        putchar('\\n');
+    }
+    while (head) {
+        Node *t = head;
+        head = head->next;
+        free(t);
+    }
+    return 0;
+}
+""",
+            "solution": """#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node {
+    int val;
+    struct Node *next;
+} Node;
+
+Node *create_list_head(void) {
+    Node *head = NULL;
+    int x;
+    while (scanf("%d", &x) == 1 && x != 0) {
+        Node *node = (Node *)malloc(sizeof(Node));
+        if (node == NULL) break;
+        node->val = x;
+        node->next = head;
+        head = node;
+    }
+    return head;
+}
+
+int main(void) {
+    Node *head = create_list_head();
+    if (head == NULL) {
+        printf("EMPTY\\n");
+    } else {
+        for (Node *p = head; p != NULL; p = p->next) {
+            if (p != head) putchar(' ');
+            printf("%d", p->val);
+        }
+        putchar('\\n');
+    }
+    while (head) {
+        Node *t = head;
+        head = head->next;
+        free(t);
+    }
+    return 0;
+}
+""",
+            "code_checks": [
+                {"pattern": r"\bmalloc\s*\(", "message": "请使用 malloc 动态创建链表结点。"},
+                {"pattern": r"->", "message": "请使用 -> 设置结点数据域和 next 指针。"},
+            ],
+            "tests": [
+                {"name": "常规序列逆序建表", "stdin": "10 20 30 40 0\n", "expected_stdout": "40 30 20 10\n"},
+                {"name": "单结点", "stdin": "7 0\n", "expected_stdout": "7\n"},
+                {"name": "空表", "stdin": "0\n", "expected_stdout": "EMPTY\n"},
+            ],
+        },
+        {
             "id": "m6_stage",
             "code": "★ 阶段 6",
             "title": "阶段综合：有序单链表的插入、删除与遍历",

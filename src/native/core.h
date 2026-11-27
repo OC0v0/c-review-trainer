@@ -28,7 +28,7 @@ WINBASEAPI int WINAPI WideCharToMultiByte(UINT, DWORD, LPCWSTR, int, LPSTR, int,
 
 #include "json.h"
 
-#define APP_VERSION_STR "1.0.0"
+#define APP_VERSION_STR "1.1.0"
 #define BUNDLE_MAGIC "CREVBNDL"
 
 typedef struct {
