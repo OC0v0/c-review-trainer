@@ -1,0 +1,20 @@
+# Build outputs & bundled runtime dependencies
+output/
+build/
+vendor/
+*.exe
+*.dll
+*.o
+*.obj
+*.pdb
+
+# Python caches
+__pycache__/
+*.py[cod]
+.venv/
+
+# Runtime & user data
+.crev_data/
+.crev_rt_*/
+debug.log
+progress.json
