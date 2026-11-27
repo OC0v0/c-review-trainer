@@ -1535,10 +1535,9 @@ static LRESULT CALLBACK ScintillaSubclassProc(HWND hwnd, UINT msg, WPARAM wp, LP
             int s0 = (int)sci(SCI_GETSELECTIONSTART, 0, 0);
             int s1 = (int)sci(SCI_GETSELECTIONEND, 0, 0);
 
-            /* Typing '(' while completion popup highlights a symbol: accept & open CallTip! */
+            /* Never hijack '(' into accepting a completion item: dismiss popup cleanly and pair () */
             if (ch == '(' && g_ac_visible) {
-                ac_popup_accept(1);
-                return 0;
+                ac_popup_hide();
             }
 
             /* Skip over matching closing bracket/quote */

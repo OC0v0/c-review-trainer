@@ -1368,31 +1368,29 @@ static void ci_format_type_detail(const char *type_name, int ptr_depth, char *ou
     }
 }
 
-/* Returns match penalty (0=exact-case prefix, 20=ci-prefix, 55=acronym/boundary, 90=subseq) or -1 if no match */
+/* Returns match penalty (0=exact-case prefix, 20=ci-prefix, 55=word-boundary acronym) or -1 if no match.
+ * Deliberately avoids loose scattered subsequence matching so e.g. "for" NEVER matches "ferror"/"floor"! */
 static int ci_match_score(const char *cand, const char *prefix, int plen, int *out_is_prefix) {
     *out_is_prefix = 1;
     if (plen == 0) return 0;
     if (strncmp(cand, prefix, (size_t)plen) == 0) return 0;
     if (_strnicmp(cand, prefix, (size_t)plen) == 0) return 20;
 
-    /* Fuzzy / subsequence matching (RedPanda-C++ style: pf -> printf, mc -> my_count_char) */
+    /* Word-boundary / snake_case / camelCase acronym match only (e.g. mc -> my_count_char) */
     if (plen < 2) return -1;
     if (tolower((unsigned char)cand[0]) != tolower((unsigned char)prefix[0])) return -1;
 
     *out_is_prefix = 0;
-    int ci = 0, pi = 0, boundary_hits = 0;
     int clen = (int)strlen(cand);
-    while (ci < clen && pi < plen) {
-        if (tolower((unsigned char)cand[ci]) == tolower((unsigned char)prefix[pi])) {
-            if (ci == 0 || cand[ci - 1] == '_' || (isupper((unsigned char)cand[ci]) && islower((unsigned char)cand[ci - 1]))) {
-                boundary_hits++;
-            }
+    int pi = 1;
+    for (int ci = 1; ci < clen && pi < plen; ci++) {
+        int is_boundary = (cand[ci - 1] == '_') ||
+                          (isupper((unsigned char)cand[ci]) && islower((unsigned char)cand[ci - 1]));
+        if (is_boundary && tolower((unsigned char)cand[ci]) == tolower((unsigned char)prefix[pi])) {
             pi++;
         }
-        ci++;
     }
-    if (pi < plen) return -1;
-    return (boundary_hits == plen) ? 55 : 90;
+    return (pi == plen) ? 55 : -1;
 }
 
 static int ci_cmp_cand(const void *a, const void *b) {
@@ -1504,7 +1502,11 @@ static int ci_query_completions(const char *src, int src_len, int caret_pos, int
         is_member = 1; dot_pos = op_pos - 1;
     }
 
-    if (!is_member && !force && plen < 1) return 0;
+    /* Auto-trigger requires >=2 chars for normal identifiers (0 chars for '.' / '->' / Ctrl+Space) */
+    if (!is_member && !force && plen < 2) return 0;
+
+    /* If user already finished typing an exact C keyword (for, if, while, return, int...), don't interrupt! */
+    if (!is_member && !force && ci_is_c_keyword(prefix)) return 0;
 
     CIContext *ctx = (CIContext *)malloc(sizeof(CIContext));
     if (!ctx) return 0;
@@ -1574,7 +1576,8 @@ static int ci_query_completions(const char *src, int src_len, int caret_pos, int
         int sc = ci_match_score(st->name, prefix, plen, &is_p);
         if (sc < 0) continue;
         int hdr_inc = ci_has_header(ctx, st->header);
-        if (!force && plen == 1 && st->header != NULL && !hdr_inc) continue;
+        /* Auto-trigger only suggests symbols from headers actually #included in this file */
+        if (!force && st->header != NULL && !hdr_inc) continue;
         int base_p = 50;
         if (st->header == NULL) base_p = (st->kind == CI_TYPE) ? 45 : 65;
         else if (hdr_inc) base_p = (st->kind == CI_FUNC) ? 40 : 50;
